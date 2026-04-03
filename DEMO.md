@@ -99,10 +99,22 @@ docker-compose exec kafka-1 kafka-topics \
   --bootstrap-server kafka-1:9092 --list
 ```
 
-**Should see topics:**
-- `raw_products` (initial topic from producer)
-- `processed_products` (will be created by streams)
-- `_schemas` (schema registry internal)
+**Expected output:**
+```
+__consumer_offsets
+_connect-configs
+_connect-offsets
+_connect-status
+_schemas
+raw_products
+```
+
+**Topic details:**
+- `raw_products` ← Created by producer (contains 1000 Avro events)
+- `processed_products` ← Will be created by streams processor (optional, depends on topology)
+- `_schemas` ← Schema Registry internal topic
+- `_connect-*` ← Kafka Connect internal topics
+- `__consumer_offsets` ← Consumer group offsets tracking
 
 ### Step 2.4: Verify events in topic
 ```bash
