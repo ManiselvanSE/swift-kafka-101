@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "PackageEvent",
+  "namespace": "com.swifttrack.schemas",
+  "fields": [
+    {"name": "package_id", "type": "string"},
+    {"name": "status", "type": "string"},
+    {"name": "timestamp", "type": "long"},
+    {"name": "location", "type": "string"}
+  ]
+}

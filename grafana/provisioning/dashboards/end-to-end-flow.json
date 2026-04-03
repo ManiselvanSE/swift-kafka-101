@@ -1,0 +1,166 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisLabel": "Messages/sec",
+            "axisPlacement": "auto",
+            "hideFrom": {"tooltip": false, "viz": false, "legend": false},
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "spanNulls": true
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+      "id": 2,
+      "options": {
+        "legend": {"calcs": ["mean", "max", "min"], "displayMode": "table", "placement": "right"},
+        "tooltip": {"mode": "multi"}
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {"expr": "rate(kafka_producer_record_send_total[1m])", "legendFormat": "Producer (In)", "refId": "A"},
+        {"expr": "rate(kafka_streams_application_records_consumed_total[1m])", "legendFormat": "Streams (Consumed)", "refId": "B"},
+        {"expr": "rate(kafka_streams_application_records_produced_total[1m])", "legendFormat": "Streams (Produced)", "refId": "C"},
+        {"expr": "rate(kafka_connect_sink_record_write_total[1m])", "legendFormat": "Sink (To DB)", "refId": "D"}
+      ],
+      "title": "End-to-End Message Flow (messages/sec)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisLabel": "Latency (ms)",
+            "axisPlacement": "auto",
+            "hideFrom": {"tooltip": false, "viz": false, "legend": false},
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "spanNulls": true
+          },
+          "mappings": [],
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "id": 3,
+      "options": {
+        "legend": {"calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom"},
+        "tooltip": {"mode": "multi"}
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {"expr": "histogram_quantile(0.95, kafka_producer_record_send_latency_avg)", "legendFormat": "Producer Latency P95", "refId": "A"},
+        {"expr": "histogram_quantile(0.95, kafka_streams_application_processing_milliseconds_bucket)", "legendFormat": "Processor Latency P95", "refId": "B"},
+        {"expr": "kafka_connect_sink_record_lag_max", "legendFormat": "Sink Lag Max", "refId": "C"}
+      ],
+      "title": "Component Latencies (P95)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisLabel": "Messages",
+            "axisPlacement": "auto",
+            "hideFrom": {"tooltip": false, "viz": false, "legend": false},
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "spanNulls": true
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "id": 4,
+      "options": {
+        "legend": {"calcs": [], "displayMode": "list", "placement": "bottom"},
+        "tooltip": {"mode": "multi"}
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {"expr": "kafka_producer_record_error_total", "legendFormat": "Producer Errors", "refId": "A"},
+        {"expr": "kafka_streams_application_errors_total", "legendFormat": "Processor Errors", "refId": "B"},
+        {"expr": "kafka_connect_connector_task_failures_total", "legendFormat": "Sink Task Failures", "refId": "C"}
+      ],
+      "title": "Error Rates by Component",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisLabel": "Records",
+            "axisPlacement": "auto",
+            "hideFrom": {"tooltip": false, "viz": false, "legend": false},
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "spanNulls": true
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+      "id": 5,
+      "options": {
+        "legend": {"calcs": ["mean"], "displayMode": "list", "placement": "bottom"},
+        "tooltip": {"mode": "multi"}
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {"expr": "increase(kafka_producer_record_send_total[1h])", "legendFormat": "Producer (1h)", "refId": "A"},
+        {"expr": "increase(kafka_streams_application_records_consumed_total[1h])", "legendFormat": "Streams Received (1h)", "refId": "B"},
+        {"expr": "increase(kafka_connect_sink_record_write_total[1h])", "legendFormat": "Sink Write (1h)", "refId": "C"}
+      ],
+      "title": "Total Messages Processed (Last 1 hour)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 27,
+  "style": "dark",
+  "tags": ["EndToEnd", "Pipeline", "Monitoring"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "End-to-End Message Flow",
+  "uid": "e2e-message-flow",
+  "version": 0
+}

@@ -1,0 +1,92 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker
+.docker/
+docker-compose.override.yml
+.dockerignore
+
+# Logs
+*.log
+logs/
+*.out
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+.temp/
+temp/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.prod
+
+# OS
+.DS_Store
+Thumbs.db
+*.local
+
+# Kafka data
+kafka-data/
+zookeeper-data/
+
+# PostgreSQL data
+pgdata/
+
+# Prometheus data
+prometheus-storage/
+grafana-storage/
+
+# Node modules (if any)
+node_modules/
+
+# Git-lfs (if configured)
+.git-lfs/
+
+# Credentials
+credentials.json
+secrets.json
+
+# Build artifacts
+dist/
+build/
+*.tar.gz

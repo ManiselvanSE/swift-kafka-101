@@ -1,0 +1,23 @@
+{
+  "name": "package-count-by-status-sink",
+  "config": {
+    "connector.class": "io.confluent.connect.jdbc.sink.JdbcSinkConnector",
+    "topics": "package-count-by-status",
+    "tasks.max": "1",
+    "connection.url": "jdbc:postgresql://postgres:5432/swifttrack",
+    "connection.user": "swifttrack",
+    "connection.password": "swifttrack",
+    "insert.mode": "upsert",
+    "pk.fields": "status",
+    "auto.create": "false",
+    "auto.evolve": "false",
+    "table.name.format": "package_count_by_status",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    "value.converter.schema.registry.url": "http://schema-registry:8081",
+    "types.cast.map": "{\"java.util.Map\":\"VARCHAR\"}",
+    "ignore.record.value": "false",
+    "errors.log.enable": "true",
+    "errors.log.include.messages": "true"
+  }
+}

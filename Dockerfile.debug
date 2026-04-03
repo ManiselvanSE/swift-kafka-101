@@ -1,0 +1,14 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy requirements and streams processor
+COPY streams-processor/requirements.txt .
+COPY streams-processor/stream_processor_debug.py .
+COPY schemas/ /app/schemas/
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Run debug stream processor
+CMD ["python", "stream_processor_debug.py"]

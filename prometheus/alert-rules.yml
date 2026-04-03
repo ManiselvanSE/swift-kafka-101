@@ -1,0 +1,99 @@
+groups:
+  - name: kafka_rules
+    interval: 30s
+    rules:
+      # Alert if Kafka brokers go down
+      - alert: KafkaBrokerDown
+        expr: count(up{job="kafka"}) < 3
+        for: 2m
+        labels:
+          severity: critical
+          service: kafka
+        annotations:
+          summary: "Kafka broker is down"
+          description: "Only {{ $value }} broker(s) available, expected 3"
+
+      # Alert if replication factor drops
+      - alert: UnderReplicatedPartitions
+        expr: kafka_server_replicamanager_underreplicatedpartitions > 0
+        for: 5m
+        labels:
+          severity: warning
+          service: kafka
+        annotations:
+          summary: "Under-replicated partitions detected"
+          description: "{{ $value }} partitions are under-replicated"
+
+      # Alert if offline partitions
+      - alert: OfflinePartitions
+        expr: kafka_controller_kafkacontroller_offlinepartitionscount > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: kafka
+        annotations:
+          summary: "Offline partitions detected"
+          description: "{{ $value }} partitions are offline"
+
+      # Alert if broker disk usage high
+      - alert: HighDiskUsage
+        expr: kafka_log_log_size_bytes > (100 * 1024 * 1024 * 1024)  # 100GB
+        for: 5m
+        labels:
+          severity: warning
+          service: kafka
+        annotations:
+          summary: "High disk usage on broker"
+          description: "Broker {{ $labels.instance }} using {{ $value | humanize }}B"
+
+  - name: connector_rules
+    interval: 30s
+    rules:
+      # Alert if connector tasks in FAILED state
+      - alert: ConnectorTaskFailure
+        expr: count(kafka_connect_task_state == 3) > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: kafka-connect
+        annotations:
+          summary: "Kafka Connect task failed"
+          description: "{{ $value }} task(s) in FAILED state"
+
+  - name: database_rules
+    interval: 30s
+    rules:
+      # Alert if database connections approaching limit
+      - alert: PostgresConnectionLimitWarning
+        expr: pg_stat_activity_count > 80
+        for: 2m
+        labels:
+          severity: warning
+          service: postgres
+        annotations:
+          summary: "PostgreSQL connection limit warning"
+          description: "{{ $value }} connections in use (max: 100)"
+
+      # Alert if database size growing rapidly
+      - alert: HighDatabaseGrowth
+        expr: rate(pg_database_size_bytes[1h]) > (1024 * 1024 * 100)  # 100MB/hour
+        for: 1h
+        labels:
+          severity: warning
+          service: postgres
+        annotations:
+          summary: "Database growing rapidly"
+          description: "Database growing at {{ $value | humanize }}B/hour"
+
+  - name: general_rules
+    interval: 30s
+    rules:
+      # Up metric for all targets
+      - alert: TargetDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Target down"
+          description: "{{ $labels.job }} instance {{ $labels.instance }} is down"

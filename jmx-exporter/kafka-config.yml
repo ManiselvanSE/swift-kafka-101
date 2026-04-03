@@ -1,0 +1,77 @@
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+whitelistObjectNames:
+  # Network metrics
+  - "kafka.server:type=BrokerTopicMetrics,*"
+  - "kafka.server:type=DelayedOperationPurgatory,*"
+  - "kafka.server:type=ReplicaManager,*"
+  - "kafka.server:type=KafkaRequestHandlerPool,*"
+  - "kafka.network:type=SocketServer,*"
+  - "kafka.network:type=RequestMetrics,*"
+  # Controller metrics
+  - "kafka.controller:type=KafkaController,*"
+  # Broker metrics
+  - "kafka.server:type=BrokerTopicMetrics,name=*"
+  - "kafka.server:name=*"
+  - "java.lang:type=Memory"
+  - "java.lang:type=Runtime"
+  - "java.lang:type=Threading"
+  - "java.lang:type=GarbageCollector,*"
+  # Log metrics
+  - "kafka.log:type=Log,*"
+  - "kafka.log:type=LogCleaner,*"
+  - "kafka.log:type=LogCleanerManager,*"
+  # Topic metrics
+  - "kafka.server:type=BrokerTopicMetrics,topic=*,client-id=*"
+  # Replication metrics
+  - "kafka.server:type=ReplicaFetcher,*"
+
+rules:
+  # Network metrics
+  - pattern: kafka.server<type=BrokerTopicMetrics, name=(.+)><>OneMinuteRate
+    name: kafka_broker_topic_metrics_one_minute_rate
+    labels:
+      metric: "$1"
+  - pattern: kafka.server<type=BrokerTopicMetrics, name=(.+)><>Count
+    name: kafka_broker_topic_metrics_total
+    labels:
+      metric: "$1"
+  
+  # Replica Manager
+  - pattern: kafka.server<type=ReplicaManager, name=(.+)><>Value
+    name: kafka_replica_manager
+    labels:
+      metric: "$1"
+  
+  # Delayed Operations
+  - pattern: kafka.server<type=DelayedOperationPurgatory, name=(.+), clientSoftwareName=(.+)><>Value
+    name: kafka_delayed_operation_purgatory
+    labels:
+      metric: "$1"
+      client: "$2"
+  
+  # JVM Memory
+  - pattern: 'java.lang<type=Memory><HeapMemoryUsage>(.+)'
+    name: jvm_heap_memory_$1
+  
+  - pattern: 'java.lang<type=Memory><NonHeapMemoryUsage>(.+)'
+    name: jvm_non_heap_memory_$1
+  
+  # JVM GC
+  - pattern: 'java.lang<type=GarbageCollector, name=(.+)><CollectionCount>'
+    name: jvm_gc_collection_count
+    labels:
+      gc: "$1"
+  
+  - pattern: 'java.lang<type=GarbageCollector, name=(.+)><CollectionTime>'
+    name: jvm_gc_collection_time_ms
+    labels:
+      gc: "$1"
+  
+  # JVM Runtime
+  - pattern: 'java.lang<type=Runtime><Uptime>'
+    name: jvm_uptime_ms
+  
+  # JVM Threading
+  - pattern: 'java.lang<type=Threading><(.+)>'
+    name: jvm_threads_$1

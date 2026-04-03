@@ -1,0 +1,63 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'swifttrack'
+    environment: 'local'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files:
+  - '/etc/prometheus/alert-rules.yml'
+
+scrape_configs:
+  # Kafka Brokers - TCP probe (Check if brokers are up)
+  - job_name: 'kafka-1'
+    static_configs:
+      - targets: ['kafka-1:9092']
+    metrics_path: '/probe'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  - job_name: 'kafka-2'
+    static_configs:
+      - targets: ['kafka-2:9092']
+    metrics_path: '/probe'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  - job_name: 'kafka-3'
+    static_configs:
+      - targets: ['kafka-3:9092']
+    metrics_path: '/probe'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Schema Registry
+  - job_name: 'schema-registry'
+    static_configs:
+      - targets: ['schema-registry:8081']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Kafka Connect
+  - job_name: 'kafka-connect'
+    static_configs:
+      - targets: ['kafka-connect:8083']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 15s
+
+  # Node Exporter (if available)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s

@@ -1,0 +1,13 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy requirements and producer
+COPY producer-app/requirements.txt .
+COPY producer-app/producer.py .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt cachetools
+
+# Run producer
+CMD ["python", "producer.py"]
