@@ -149,7 +149,20 @@ raw_products
 
 ### Step 2.4: Verify events in topic
 
-#### Option A: Using Docker (✅ Recommended - More Reliable)
+#### Option A: Check Message Count (✅ Recommended First Check)
+```bash
+docker run --rm --network swifttrack-kafka-lab_default \
+  confluentinc/cp-kafka:7.9.0 kafka-run-class kafka.tools.GetOffsetShell \
+  --broker-list kafka-1:9092 \
+  --topic raw_products
+```
+
+**Expected output:**
+```
+raw_products:0:20    ← 20 messages total (offsets 0-19)
+```
+
+#### Option B: Consume Messages (Binary Avro Format)
 ```bash
 docker run --rm --network swifttrack-kafka-lab_default \
   confluentinc/cp-kafka:7.9.0 kafka-console-consumer \
@@ -159,25 +172,33 @@ docker run --rm --network swifttrack-kafka-lab_default \
   --max-messages 2
 ```
 
-#### Option B: Using Docker Compose (Alternative)
-```bash
-docker-compose exec kafka-1 kafka-console-consumer \
-  --bootstrap-server kafka-1:9092 \
-  --topic raw_products \
-  --from-beginning \
-  --max-messages 2
+**Expected output:**
+```
+[Avro binary data - not human readable]
+[Avro binary data - not human readable]
+Processed a total of 2 messages   ← Confirms 2 messages consumed
 ```
 
-**Sample output (Avro binary - first 2 messages):**
+> ℹ️ **Note:** Messages appear as binary because they're Avro-encoded. This is correct! The stream processor will deserialize them automatically.
+
+#### Option C: Verify with Kafka Describe (Most Reliable)
+```bash
+docker run --rm --network swifttrack-kafka-lab_default \
+  confluentinc/cp-kafka:7.9.0 kafka-topics \
+  --bootstrap-server kafka-1:9092 \
+  --describe --topic raw_products
 ```
-[binary Avro encoded message #1]
-[binary Avro encoded message #2]
+
+**Expected output:**
+```
+Topic: raw_products     Partition: 0    Leader: 1    Replicas: [1]  Isr: [1]
 ```
 
 ✅ **Success Indicators:**
-- Messages appear (in Avro binary format)
-- Consumer reads from partition 0
-- Offsets increment (20, 21, 22, etc.)
+- ✅ Topic exists (`raw_products`)
+- ✅ Message count > 0
+- ✅ Leader partition assigned
+- ✅ Consumer shows "Processed a total of X messages"
 
 ---
 
