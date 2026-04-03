@@ -139,12 +139,43 @@ curl -X POST \
 
 ### Step 6: Verify Connector Status
 
+**Check all running connectors:**
 ```bash
-# Get all connectors
 curl -s http://localhost:8083/connectors | jq '.'
+```
 
-# Check specific connector status
-curl -s http://localhost:8083/connectors/package-events-delivered-sink/status | jq '.'
+**Check specific connector status (with pretty JSON formatting):**
+```bash
+curl -s http://localhost:8083/connectors/processed-products-sink/status | python -m json.tool
+```
+
+**Expected output (RUNNING state):**
+```json
+{
+    "name": "processed-products-sink",
+    "connector": {
+        "state": "RUNNING",
+        "worker_id": "kafka-connect:8083"
+    },
+    "tasks": [
+        {
+            "id": 0,
+            "state": "RUNNING",
+            "worker_id": "kafka-connect:8083"
+        }
+    ],
+    "type": "sink"
+}
+```
+
+**List all available connectors:**
+```bash
+curl http://localhost:8083/connectors
+```
+
+**Delete a connector (if needed):**
+```bash
+curl -X DELETE http://localhost:8083/connectors/processed-products-sink
 ```
 
 ### Step 7: Run Phase 3 Streams Processor (Reset Required)

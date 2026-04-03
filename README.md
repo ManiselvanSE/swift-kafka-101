@@ -341,8 +341,11 @@ docker-compose restart grafana
 
 ### **Database not receiving sink data?**
 ```bash
-# Check connector status
+# Check all connectors
 curl http://localhost:8083/connectors
+
+# Check specific connector status (with pretty JSON output)
+curl -s http://localhost:8083/connectors/processed-products-sink/status | python -m json.tool
 
 # View connector logs
 docker-compose logs kafka-connect
