@@ -173,11 +173,6 @@ curl -s http://localhost:8083/connectors/processed-products-sink/status | python
 curl http://localhost:8083/connectors
 ```
 
-**Delete a connector (if needed):**
-```bash
-curl -X DELETE http://localhost:8083/connectors/processed-products-sink
-```
-
 ### Step 7: Run Phase 3 Streams Processor (Reset Required)
 
 Before running the processor, reset the consumer group to reprocess all messages:
