@@ -149,56 +149,48 @@ raw_products
 
 ### Step 2.4: Verify events in topic
 
-#### Option A: Check Message Count (✅ Recommended First Check)
-```bash
-docker run --rm --network swifttrack-kafka-lab_default \
-  confluentinc/cp-kafka:7.9.0 kafka-run-class kafka.tools.GetOffsetShell \
-  --broker-list kafka-1:9092 \
-  --topic raw_products
-```
-
-**Expected output:**
-```
-raw_products:0:20    ← 20 messages total (offsets 0-19)
-```
-
-#### Option B: Consume Messages (Binary Avro Format)
+#### ✅ Option A: Consume with Timeout (MOST RELIABLE)
 ```bash
 docker run --rm --network swifttrack-kafka-lab_default \
   confluentinc/cp-kafka:7.9.0 kafka-console-consumer \
   --bootstrap-server kafka-1:9092 \
-  --topic raw_products \
+  --topic raw-products \
   --from-beginning \
-  --max-messages 2
+  --max-messages 3 \
+  --timeout-ms 5000
 ```
 
-**Expected output:**
+**Expected output (Avro binary mixed with readable text):**
 ```
-[Avro binary data - not human readable]
-[Avro binary data - not human readable]
-Processed a total of 2 messages   ← Confirms 2 messages consumed
+PKG-f425c1c1"Package Picked Up~~索g0Chicago Sorting Facility
+PKG-f425c1c1In Transit~~索g"Customer Location
+PKG-f425c1c1 Out for Delivery~~索g8New York Distribution Center
+Processed a total of 3 messages
 ```
 
-> ℹ️ **Note:** Messages appear as binary because they're Avro-encoded. This is correct! The stream processor will deserialize them automatically.
+> ℹ️ **Important:** The garbled characters (`~~索g0`) are Avro binary encoding. This is **normal and expected**!
+> - Readable parts = String values (package ID, status, location)
+> - Garbled parts = Binary schema metadata and type information
+> - The consumer successfully read all messages ✅
 
-#### Option C: Verify with Kafka Describe (Most Reliable)
+#### Option B: Check Topic Metadata
 ```bash
 docker run --rm --network swifttrack-kafka-lab_default \
   confluentinc/cp-kafka:7.9.0 kafka-topics \
   --bootstrap-server kafka-1:9092 \
-  --describe --topic raw_products
+  --describe --topic raw-products
 ```
 
 **Expected output:**
 ```
-Topic: raw_products     Partition: 0    Leader: 1    Replicas: [1]  Isr: [1]
+Topic: raw-products  Partition: 0  Leader: 1  Replicas: [1]  Isr: [1]
 ```
 
-✅ **Success Indicators:**
-- ✅ Topic exists (`raw_products`)
-- ✅ Message count > 0
-- ✅ Leader partition assigned
-- ✅ Consumer shows "Processed a total of X messages"
+✅ **Success Indicators - Look for ALL of these:**
+- ✅ Consumer output shows message **IDs and status values** (even if garbled)
+- ✅ Line shows "**Processed a total of X messages**" (not 0!)
+- ✅ Topic describes successfully with leader assigned
+- ✅ No "UNKNOWN_TOPIC_OR_PARTITION" errors
 
 ---
 
