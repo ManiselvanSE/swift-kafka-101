@@ -31,6 +31,7 @@ OUTPUT_DELIVERED = 'package-events-delivered'
 OUTPUT_BY_LOCATION = 'package-events-by-location'
 OUTPUT_STATUS_COUNT = 'package-count-by-status'
 OUTPUT_DELIVERY_HOPS = 'package-delivery-hops'
+OUTPUT_CONSOLIDATED = 'processed_products'
 
 
 def register_schemas():
@@ -69,6 +70,15 @@ def register_schemas():
                 {"name": "hop_count", "type": "int"},
                 {"name": "status_history", "type": {"type": "array", "items": "string"}},
                 {"name": "duration_ms", "type": "long"}
+            ]
+        },
+        'processed_products': {
+            "type": "record", "name": "ProcessedProduct", "namespace": "com.swifttrack.schemas",
+            "fields": [
+                {"name": "package_id", "type": "string"},
+                {"name": "status", "type": "string"},
+                {"name": "location", "type": "string"},
+                {"name": "timestamp", "type": "long"}
             ]
         }
     }
@@ -185,6 +195,19 @@ class StreamProcessor:
                     count += 1
 
                     logger.info(f"[INPUT #{count}] {pkg_id} | {status} | {location}")
+
+                    # Consolidated output: Write all processed messages
+                    self.producer.produce(
+                        OUTPUT_CONSOLIDATED,
+                        key=pkg_id,
+                        value=json.dumps({
+                            'package_id': pkg_id,
+                            'status': status,
+                            'location': location,
+                            'timestamp': ts
+                        }).encode()
+                    )
+                    logger.info(f"  -> [WRITE processed_products]")
 
                     # Filter: Delivered
                     if status == 'Delivered':
