@@ -148,6 +148,18 @@ raw_products
 - `__consumer_offsets` ← Consumer group offsets tracking
 
 ### Step 2.4: Verify events in topic
+
+#### Option A: Using Docker (✅ Recommended - More Reliable)
+```bash
+docker run --rm --network swifttrack-kafka-lab_default \
+  confluentinc/cp-kafka:7.9.0 kafka-console-consumer \
+  --bootstrap-server kafka-1:9092 \
+  --topic raw_products \
+  --from-beginning \
+  --max-messages 2
+```
+
+#### Option B: Using Docker Compose (Alternative)
 ```bash
 docker-compose exec kafka-1 kafka-console-consumer \
   --bootstrap-server kafka-1:9092 \
@@ -156,11 +168,16 @@ docker-compose exec kafka-1 kafka-console-consumer \
   --max-messages 2
 ```
 
-**Sample output (Avro binary):**
+**Sample output (Avro binary - first 2 messages):**
 ```
-...avro binary encoded messages...
-(Each message contains: id, name, category, price, timestamp)
+[binary Avro encoded message #1]
+[binary Avro encoded message #2]
 ```
+
+✅ **Success Indicators:**
+- Messages appear (in Avro binary format)
+- Consumer reads from partition 0
+- Offsets increment (20, 21, 22, etc.)
 
 ---
 
