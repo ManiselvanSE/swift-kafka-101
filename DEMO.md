@@ -83,13 +83,15 @@ pip install -r requirements.txt
 
 #### Option A: Using Docker (✅ Recommended for cross-platform compatibility)
 ```bash
-cd swifttrack-kafka-lab  # Root project directory
+# Use absolute path (works on all platforms)
 docker run --rm --network swifttrack-kafka-lab_default \
-  -v "$(pwd)/producer-app:/app" \
+  -v "E:\Kafka\Projects\Swift Track\SwiftTrack-Kafka-Lab\producer-app:/app" \
   python:3.11 bash -c "cd /app && \
     pip install -q confluent-kafka==2.2.0 avro==1.11.3 requests authlib httpx cachetools websocket-client && \
     python producer.py"
 ```
+
+> **Note:** Replace path with your actual project location if different. On Mac/Linux, use `/path/to/SwiftTrack-Kafka-Lab/producer-app:/app`
 
 #### Option B: Host Machine Python (Requires proper environment setup)
 ```bash
@@ -225,13 +227,15 @@ cat topology.py
 
 #### Option A: Using Docker (✅ Recommended)
 ```bash
-# From project root
+# Use absolute path (works on all platforms: Windows, Mac, Linux)
 docker run --rm --network swifttrack-kafka-lab_default \
-  -v "$(pwd)/streams-processor:/app" \
+  -v "E:\Kafka\Projects\Swift Track\SwiftTrack-Kafka-Lab\streams-processor:/app" \
   python:3.11 bash -c "cd /app && \
     pip install -q confluent-kafka confluent-kafka[avro] && \
     timeout 30 python stream_processor.py"
 ```
+
+> **Note:** Replace path with your actual project location if different. On Mac/Linux, use `/path/to/SwiftTrack-Kafka-Lab/streams-processor:/app`
 
 #### Option B: Host Machine Python
 ```bash
