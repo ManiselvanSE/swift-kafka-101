@@ -100,6 +100,7 @@ class StreamProcessor:
     def __init__(self):
         """Initialize."""
         register_schemas()
+        self.sr_client = SchemaRegistryClient({'url': SCHEMA_REGISTRY_URL})
         
         def on_assign(consumer, partitions):
             logger.info(f"Partitions assigned: {[(p.topic, p.partition) for p in partitions]}")
@@ -157,6 +158,35 @@ class StreamProcessor:
             logger.debug(f"Deserialization error: {e}")
             return None
 
+    def serialize_avro(self, topic: str, data: dict) -> bytes:
+        """Serialize data as Avro with schema registry."""
+        import struct
+        import fastavro
+        from io import BytesIO
+        
+        subject = f'{topic}-value'
+        try:
+            schema_obj = self.sr_client.get_latest_version(subject)
+            if hasattr(schema_obj, 'schema_str'):
+                reader_schema = json.loads(schema_obj.schema_str)
+            elif hasattr(schema_obj, 'schema'):
+                reader_schema = json.loads(schema_obj.schema)
+            else:
+                reader_schema = json.loads(str(schema_obj))
+            
+            # Serialize the data
+            output = BytesIO()
+            fastavro.schemaless_writer(output, reader_schema, data)
+            avro_bytes = output.getvalue()
+            
+            # Prepend schema ID in Avro format (magic byte 0 + schema ID)
+            schema_id = schema_obj.schema_id
+            msg_bytes = bytes([0]) + struct.pack('>I', schema_id) + avro_bytes
+            return msg_bytes
+        except Exception as e:
+            logger.error(f"Avro serialization error: {e}")
+            return None
+
     def process(self):
         """Process stream."""
         count = 0
@@ -196,7 +226,7 @@ class StreamProcessor:
 
                     logger.info(f"[INPUT #{count}] {pkg_id} | {status} | {location}")
 
-                    # Consolidated output: Write all processed messages
+                    # Consolidated output: Write all processed messages as JSON
                     self.producer.produce(
                         OUTPUT_CONSOLIDATED,
                         key=pkg_id,

@@ -1,7 +1,7 @@
 {
   "name": "package-events-delivered-sink",
   "config": {
-    "connector.class": "io.confluent.connect.jdbc.sink.JdbcSinkConnector",
+    "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
     "topics": "package-events-delivered",
     "tasks.max": "1",
     "connection.url": "jdbc:postgresql://postgres:5432/swifttrack",
