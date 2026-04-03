@@ -30,10 +30,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Configuration - use environment variables with defaults for Docker network
-BOOTSTRAP_SERVERS = os.getenv('BOOTSTRAP_SERVERS', 'kafka-1:9092')
+# Configuration - use environment variables with defaults
+# For Docker network, use: kafka-1:9092
+# For host machine with localhost networking, use java -Dapp.config=file://...
+BOOTSTRAP_SERVERS = os.getenv('BOOTSTRAP_SERVERS', 'kafka-1:9092')  
 SCHEMA_REGISTRY_URL = os.getenv('SCHEMA_REGISTRY_URL', 'http://schema-registry:8081')
-TOPIC = 'package-events'
+TOPIC = 'raw-products'
 
 # Package statuses
 STATUSES = [

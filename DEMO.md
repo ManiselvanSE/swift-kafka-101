@@ -1,5 +1,7 @@
 # 🎬 SwiftTrack Kafka Lab - Complete Demo Walkthrough
 
+> **📌 NOTE:** For actual demo execution results and troubleshooting, see [DEMO_EXECUTION_REPORT.md](DEMO_EXECUTION_REPORT.md)
+
 **Complete step-by-step guide to run the entire 6-phase Kafka pipeline (15-20 minutes)**
 
 ---
@@ -11,6 +13,7 @@ Before starting, ensure:
 - [ ] 4+ GB RAM available
 - [ ] Ports available: 9092, 9093, 9094, 8081, 8083, 5432, 9090, 3000
 - [ ] Project cloned: `git clone https://github.com/yourusername/swifttrack-kafka-lab.git`
+- [ ] Python 3.9+ (if running produced on host machine - see **Docker Alternative** below)
 
 ---
 
@@ -77,21 +80,49 @@ pip install -r requirements.txt
 - requests
 
 ### Step 2.2: Run the producer
+
+#### Option A: Using Docker (✅ Recommended for cross-platform compatibility)
 ```bash
+cd swifttrack-kafka-lab  # Root project directory
+docker run --rm --network swifttrack-kafka-lab_default \
+  -v "$(pwd)/producer-app:/app" \
+  python:3.11 bash -c "cd /app && \
+    pip install -q confluent-kafka==2.2.0 avro==1.11.3 requests authlib httpx cachetools websocket-client && \
+    python producer.py"
+```
+
+#### Option B: Host Machine Python (Requires proper environment setup)
+```bash
+# First ensure all dependencies are installed
+pip install --upgrade pip
+pip install confluent-kafka==2.2.0 avro==1.11.3 requests authlib httpx cachetools websocket-client
+
+# Then run producer
+cd producer-app
 python producer.py
 ```
 
+> ⚠️ **Note:** If you get `ModuleNotFoundError` errors with Option B, use Option A (Docker) instead.
+
 **Expected output:**
 ```
-[INFO] Initializing Kafka Producer...
-[INFO] Producer initialized successfully
-[INFO] Sending 1000 Avro events to topic: raw_products
-[Progress] ████████████████████ 50/1000 events
-[Progress] ████████████████████ 100/1000 events
+[2026-04-03 08:02:57] INFO: Starting PackageProducer...
+[2026-04-03 08:02:57] INFO: Using existing schema version 1
+[2026-04-03 08:02:57] INFO: Creating Kafka producer with idempotence enabled, acks=all, compression=snappy
+[2026-04-03 08:02:57] INFO: PackageProducer initialized successfully
+[2026-04-03 08:02:57] INFO: Simulating 5 packages with 4 events each
+[2026-04-03 08:02:59] INFO: Message sent: PackageID=PKG-9eee2413, Status=*, Partition=0, Offset=20
+[2026-04-03 08:02:59] INFO: Message sent: PackageID=PKG-9eee2413, Status=*, Partition=0, Offset=21
 ...
-[SUCCESS] Produced 1000 events in 12.5 seconds
-[INFO] Average throughput: 80 events/sec
+[2026-04-03 08:02:59] INFO: All messages sent successfully. Flushed producer.
+[2026-04-03 08:02:59] INFO: PackageProducer completed successfully
 ```
+
+✅ **Success Indicators:**
+- No errors or exceptions
+- All 20 messages sent (5 packages × 4 events each)
+- Output shows message offsets incrementing
+- Producer closed gracefully
 
 ### Step 2.3: Verify topics created
 ```bash
@@ -161,27 +192,46 @@ cat topology.py
 3. **Produces** to `processed_products` topic
 
 ### Step 3.3: Run the stream processor
+
+#### Option A: Using Docker (✅ Recommended)
 ```bash
-python app.py
+# From project root
+docker run --rm --network swifttrack-kafka-lab_default \
+  -v "$(pwd)/streams-processor:/app" \
+  python:3.11 bash -c "cd /app && \
+    pip install -q confluent-kafka confluent-kafka[avro] && \
+    timeout 30 python stream_processor.py"
+```
+
+#### Option B: Host Machine Python
+```bash
+cd streams-processor
+pip install -r requirements.txt
+python stream_processor.py
+# Let it run for 30 seconds, then Ctrl+C to stop
 ```
 
 **Expected output:**
 ```
-[INFO] Stream topology initialized
-[INFO] Kafka Streams application starting...
-[INFO] Application state: RUNNING
-[INFO] Consumer lag: 1000 records
-[INFO] Processing records from raw_products...
-[INFO] Producing to processed_products
-[Progress] Processed: 100 records
-[Progress] Processed: 200 records
+[2026-04-03 08:05:01] INFO: Starting Phase 3: Kafka Streams Processor...
+[2026-04-03 08:05:01] INFO: StreamProcessor initialized
+[2026-04-03 08:05:01] INFO: Processing stream...
+[2026-04-03 08:05:01] INFO: Partitions assigned: [('raw-products', 0)]
+[2026-04-03 08:05:01] INFO: [INPUT #1] PKG-f425c1c1 | Package Picked Up | Chicago Sorting Facility
+[2026-04-03 08:05:01] INFO:   -> [MAP location]
+[2026-04-03 08:05:01] INFO: [INPUT #2] PKG-f425c1c1 | In Transit | Customer Location
 ...
-[METRICS] Processed 1000 records in 8.3 seconds (120 rec/sec)
-[METRICS] Latency P95: 45ms | P99: 78ms
-[METRICS] Error rate: 0.0%
+[2026-04-03 08:05:01] INFO: All 20 messages processed successfully
 ```
 
-> Keep this running in the terminal. Open new terminal for next steps.
+✅ **Success Indicators:**
+- No errors during processing
+- All input messages consumed from raw-products
+- Output topics created:
+  - `package-events-delivered`
+  - `package-events-by-location`
+  - `package-count-by-status`
+  - `package-delivery-hops`
 
 ### Step 3.4: (New Terminal) Verify processed data
 ```bash
@@ -555,56 +605,236 @@ After this demo, you understand:
 
 ---
 
-## 🐛 Troubleshooting During Demo
+## 🐛 TROUBLESHOOTING & COMMON ISSUES
 
-### Issue: "Grafana showing No Data"
-```bash
-# Wait 20+ seconds, then:
-# 1. Refresh browser
-# 2. Check Prometheus targets: http://localhost:9090/targets
-# 3. Verify Kafka brokers UP: docker-compose ps
+> **📌 IMPORTANT:** See [DEMO_EXECUTION_REPORT.md](DEMO_EXECUTION_REPORT.md) for actual demo run results and detailed issue resolution
+
+### ⚠️ Issue 1: "ModuleNotFoundError: No module named 'authlib'"
+
+**Symptom:**
+```
+ModuleNotFoundError: No module named 'authlib'
+(when running python producer.py)
 ```
 
-### Issue: "Producer connection refused"
+**Root Cause:**
+Python dependencies incompletely installed. Confluent Kafka requires authlib for schema registry OAuth support.
+
+**Solution:**
 ```bash
-# Wait 30 seconds for Kafka to fully initialize
-sleep 30
+# Install all producer dependencies
+pip install --upgrade pip
+pip install confluent-kafka==2.2.0 avro==1.11.3 requests authlib httpx websocket-client cachetools
+
+# Verify installation
+python -c "import authlib; print('✓ authlib installed')"
+
+# Now run producer
+cd producer-app
 python producer.py
 ```
 
-### Issue: "No records in database after 90 seconds"
-```bash
-# Check connector status
-curl http://localhost:8083/connectors/jdbc-sink-connector/status
+---
 
-# View connector logs
-docker-compose logs kafka-connect | tail -20
+### ⚠️ Issue 2: "Failed to resolve 'kafka-1:9092': No such host is known"
 
-# Verify processed_products topic has data
-docker-compose exec kafka-1 kafka-console-consumer \
-  --bootstrap-server kafka-1:9092 \
-  --topic processed_products \
-  --max-messages 1 \
-  --from-beginning
+**Symptom:**
+```
+httpcore.ConnectError: [Errno 11001] getaddrinfo failed
+Failed to resolve 'kafka-1:9092': No such host is known
 ```
 
-### Issue: "Tests failing"
+**Root Cause:**
+Running Python producer on host machine trying to connect to Docker service hostnames. Service names (kafka-1, kafka-2, kafka-3) only exist inside Docker network.
+
+**Solution A (✅ RECOMMENDED): Run producer in Docker**
 ```bash
-# Ensure all Kafka brokers are UP
-docker-compose ps
+# This approach works reliably on any platform
+docker run --rm --network swifttrack-kafka-lab_default \
+  -v "$(pwd)/producer-app:/app" \
+  python:3.11 bash -c "cd /app && \
+    pip install -q confluent-kafka==2.2.0 avro==1.11.3 requests authlib cachetools httpx websocket-client && \
+    python producer.py"
+```
 
-# Clear old state
-docker-compose down -v
-docker-compose up -d
+**Solution B: Add hosts file entry (Windows/Mac/Linux alternative)**
+```bash
+# Option 1: Windows hosts file
+# Edit: C:\Windows\System32\drivers\etc\hosts
+# Add: 127.0.0.1  kafka-1 kafka-2 kafka-3
 
-# Wait 30 seconds, then retry
+# Option 2: Linux/Mac hosts file
+# sudo nano /etc/hosts
+# Add: 127.0.0.1  kafka-1 kafka-2 kafka-3
+
+# Then: python producer.py
+```
+
+---
+
+### ⚠️ Issue 3: "Subscribed topic not available: package-events"
+
+**Symptom:**
+```
+ERROR: Consumer error: KafkaError{code=UNKNOWN_TOPIC_OR_PART,...}
+Subscribed topic not available: package-events
+```
+
+**Root Cause:**
+Stream processor was configured for different input topic name than what producer publishes to. Topic mismatch between producer and consumer.
+
+**Solution:**
+Verify both use the same topic name:
+```bash
+# Check producer output topic
+grep "^TOPIC = " producer-app/producer.py
+# Should show: TOPIC = 'raw-products'
+
+# Check stream processor input topic
+grep "^INPUT_TOPIC = " streams-processor/stream_processor.py
+# Should show: INPUT_TOPIC = 'raw-products'
+
+# They must match! If not, update streams-processor/stream_processor.py
+```
+
+---
+
+### Issue 4: "Grafana showing No Data"
+
+**Symptom:**
+Grafana dashboards display "No data" or empty graphs
+
+**Root Cause:**
+Prometheus metrics not yet collected or scraped from Kafka brokers
+
+**Solution:**
+```bash
+# 1. Wait 20-30 seconds for Prometheus to scrape metrics
 sleep 30
+
+# 2. Verify Prometheus targets are healthy
+# Open: http://localhost:9090/targets
+# Check that targets show "UP" status
+
+# 3. Check Prometheus data is being collected
+# Open: http://localhost:9090/graph
+# Search for metric: up{job="prometheus"}
+# Should show multiple values
+
+# 4. Refresh Grafana browser
+# Ctrl+Shift+R (hard refresh)
+
+# 5. If still empty, check Kafka brokers
+docker-compose ps
+# All should show "Up"
+```
+
+---
+
+### Issue 5: "Producer connection refused"
+
+**Symptom:**
+```
+Connection refused or timeout when starting producer
+```
+
+**Solution:**
+```bash
+# Wait for Kafka to fully initialize (30-45 seconds)
+echo "Waiting for Kafka..."
+sleep 45
+
+# Then use Docker approach
+docker run --rm --network swifttrack-kafka-lab_default \
+  -v "$(pwd)/producer-app:/app" \
+  python:latest bash -c "cd /app && pip install -q confluent-kafka avro && python producer.py"
+```
+
+---
+
+### Issue 6: "No records in database after 90 seconds"
+
+**Symptom:**
+JDBC connector not writing to PostgreSQL
+
+**Solution:**
+```bash
+# 1. Check connector status
+curl http://localhost:8083/connectors/jdbc-sink-connector/status 2>/dev/null | jq '.'
+
+# 2. View connector logs
+docker-compose logs kafka-connect | tail -50
+
+# 3. Verify stream processor output topics have data
+docker run --rm --network swifttrack-kafka-lab_default \
+  confluentinc/cp-kafka:7.9.0 kafka-console-consumer \
+  --bootstrap-server kafka-1:9092 \
+  --topic package-events-delivered \
+  --max-messages 1 \
+  --from-beginning
+
+# 4. Check PostgreSQL connection
+docker-compose exec postgres psql -U postgres -d swifttrack \
+  -c "SELECT COUNT(*) FROM processed_products;"
+```
+
+---
+
+### Issue 7: "Tests failing"
+
+**Symptom:**
+Pytest reports failures when running `python -m pytest tests/`
+
+**Solution:**
+```bash
+# Method 1: Run tests in Docker (safest)
+docker run --rm --network swifttrack-kafka-lab_default \
+  -v "$(pwd)/streams-processor:/app" \
+  python:3.11 bash -c "cd /app && \
+    pip install -q pytest confluent-kafka && \
+    python -m pytest tests/ -v"
+
+# Method 2: Host machine (requires dependencies)
+cd streams-processor
+pip install -r requirements.txt
+pip install pytest
 python -m pytest tests/ -v
 ```
 
-**For more issues, see [ISSUES_AND_SOLUTIONS.md](./ISSUES_AND_SOLUTIONS.md)**
+---
+
+### Quick Docker Reference Commands
+
+**Run Producer (All-in-one):**
+```bash
+docker run --rm --network swifttrack-kafka-lab_default \
+  -v "$(pwd)/producer-app:/app" \
+  python:3.11 bash -c "cd /app && \
+    pip install -q confluent-kafka==2.2.0 avro==1.11.3 authlib httpx cachetools websocket-client && \
+    python producer.py"
+```
+
+**Run Stream Processor (All-in-one):**
+```bash
+docker run --rm --network swifttrack-kafka-lab_default \
+  -v "$(pwd)/streams-processor:/app" \
+  python:3.11 bash -c "cd /app && \
+    pip install -q confluent-kafka confluent-kafka[avro] && \
+    timeout 30 python stream_processor.py"
+```
+
+**Run Tests (All-in-one):**
+```bash
+docker run --rm --network swifttrack-kafka-lab_default \
+  -v "$(pwd)/streams-processor:/app" \
+  python:3.11 bash -c "cd /app && \
+    pip install -q pytest confluent-kafka && \
+    python -m pytest tests/ -v"
+```
 
 ---
+
+**For comprehensive issue documentation, see [ISSUES_AND_SOLUTIONS.md](./ISSUES_AND_SOLUTIONS.md) and [DEMO_EXECUTION_REPORT.md](DEMO_EXECUTION_REPORT.md)**
 
 ## 📸 Demo Screenshots
 

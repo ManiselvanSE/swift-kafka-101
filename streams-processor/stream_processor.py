@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 BOOTSTRAP_SERVERS = os.getenv('BOOTSTRAP_SERVERS', 'kafka-1:9092')
 SCHEMA_REGISTRY_URL = os.getenv('SCHEMA_REGISTRY_URL', 'http://schema-registry:8081')
-INPUT_TOPIC = 'package-events'
+INPUT_TOPIC = 'raw-products'
 CONSUMER_GROUP = 'streams-processor-group'
 
 OUTPUT_DELIVERED = 'package-events-delivered'
