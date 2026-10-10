@@ -2,6 +2,8 @@
 
 A **comprehensive, production-ready Kafka lab** demonstrating all phases of a modern data pipeline: **Producer → Streams Processing → Connectors → Sinks → Observability**.
 
+> **Documentation navigation:** See [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) for a task-oriented guide to project docs, deployment steps, phase reports, and troubleshooting.
+
 ## 📋 Project Overview
 
 SwiftTrack is a **6-phase hands-on Kafka project** that teaches:
